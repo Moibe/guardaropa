@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from '$app/state';
+
   // Barra lateral "de vidrio" con el mismo tilt 3D que la superior. Incluye el handle
   // para replegar/mostrar. Publica su ancho real a la variable CSS --sidebar-width
   // para que el panel de contenido se ajuste solo. Items de ejemplo: reemplázalos.
@@ -9,6 +11,13 @@
     collapsed?: boolean;
     toggleCollapsed: () => void;
   } = $props();
+
+  // Edita estos items por las secciones reales de tu app.
+  const items = [
+    { href: '/', label: 'Inicio' },
+    { href: '/calendario', label: 'Calendario' },
+    { href: '/seccion-tres', label: 'Sección tres' }
+  ];
 
   let tiltX = $state(0);
   let tiltY = $state(0);
@@ -49,18 +58,16 @@
     onmouseleave={handleLeave}
   >
     <nav>
-      <a href="/" class="nav-item" aria-current="page">
-        <span class="nav-ico" aria-hidden="true"></span>
-        <span>Sección uno</span>
-      </a>
-      <a href="/seccion-dos" class="nav-item">
-        <span class="nav-ico" aria-hidden="true"></span>
-        <span>Sección dos</span>
-      </a>
-      <a href="/seccion-tres" class="nav-item">
-        <span class="nav-ico" aria-hidden="true"></span>
-        <span>Sección tres</span>
-      </a>
+      {#each items as it (it.href)}
+        <a
+          href={it.href}
+          class="nav-item"
+          aria-current={page.url.pathname === it.href ? 'page' : undefined}
+        >
+          <span class="nav-ico" aria-hidden="true"></span>
+          <span>{it.label}</span>
+        </a>
+      {/each}
     </nav>
 
     <div class="sidebar-footer">

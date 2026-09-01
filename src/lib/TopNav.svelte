@@ -22,7 +22,7 @@
   // Edita estos items por las secciones reales de tu app.
   const items = [
     { href: '/', label: 'Inicio' },
-    { href: '/seccion-dos', label: 'Sección dos' },
+    { href: '/calendario', label: 'Calendario' },
     { href: '/seccion-tres', label: 'Sección tres' }
   ];
 </script>
