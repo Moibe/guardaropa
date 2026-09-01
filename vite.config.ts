@@ -4,6 +4,16 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	// Mismo puerto que en el droplet (nginx hace proxy a 127.0.0.1:3300), para que
+	// local y prod coincidan. strictPort: falla en vez de brincar a otro puerto.
+	server: {
+		port: 3300,
+		strictPort: true
+	},
+	preview: {
+		port: 3300,
+		strictPort: true
+	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({
