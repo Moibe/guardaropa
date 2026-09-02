@@ -2,7 +2,6 @@
   import { enhance } from '$app/forms';
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
-  import { Textarea } from '$lib/components/ui/textarea';
   import {
     INICIALES_SEMANA,
     celdasDelMes,
@@ -11,25 +10,36 @@
     mesVecino,
     nombreMes
   } from '$lib/fechas';
+  import { ETIQUETA_TIPO, TIPOS_PRENDA } from '$lib/prendas';
   import type { ActionData, PageData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
   const celdas = $derived(celdasDelMes(data.mes));
 
-  // Las entradas del mes llegan en una sola lista; aquí se agrupan por día para
-  // que el grid sepa cuántas tiene cada celda y el panel filtre sin otro query.
-  const porDia = $derived.by(() => {
-    const mapa = new Map<string, PageData['entradas']>();
-    for (const entrada of data.entradas) {
-      const lista = mapa.get(entrada.fecha);
-      if (lista) lista.push(entrada);
-      else mapa.set(entrada.fecha, [entrada]);
+  // Los vestuarios del mes llegan en una sola lista; aquí se agrupan por fecha para
+  // que el grid sepa cuántos tiene cada celda y el panel filtre sin otro query.
+  const porFecha = $derived.by(() => {
+    const mapa = new Map<string, PageData['vestuarios']>();
+    for (const vestuario of data.vestuarios) {
+      const lista = mapa.get(vestuario.fecha);
+      if (lista) lista.push(vestuario);
+      else mapa.set(vestuario.fecha, [vestuario]);
     }
     return mapa;
   });
 
-  const delDia = $derived(porDia.get(data.dia) ?? []);
+  const piezasPorVestuario = $derived.by(() => {
+    const mapa = new Map<number, PageData['piezas']>();
+    for (const pieza of data.piezas) {
+      const lista = mapa.get(pieza.vestuarioId);
+      if (lista) lista.push(pieza);
+      else mapa.set(pieza.vestuarioId, [pieza]);
+    }
+    return mapa;
+  });
+
+  const delDia = $derived(porFecha.get(data.dia) ?? []);
 
   function urlDia(iso: string) {
     return `?mes=${mesDelDia(iso)}&dia=${iso}`;
@@ -63,7 +73,7 @@
     <div class="grid">
       {#each celdas as celda, i (celda?.iso ?? `hueco-${i}`)}
         {#if celda}
-          {@const cuantas = porDia.get(celda.iso)?.length ?? 0}
+          {@const cuantos = porFecha.get(celda.iso)?.length ?? 0}
           <a
             class="dia"
             class:es-hoy={celda.iso === data.hoy}
@@ -72,9 +82,9 @@
             aria-current={celda.iso === data.dia ? 'date' : undefined}
           >
             <span class="num">{celda.dia}</span>
-            {#if cuantas}
-              <span class="puntos" aria-label="{cuantas} {cuantas === 1 ? 'entrada' : 'entradas'}">
-                {#each { length: Math.min(cuantas, 3) } as _, p (p)}<i></i>{/each}
+            {#if cuantos}
+              <span class="puntos" aria-label="{cuantos} {cuantos === 1 ? 'vestuario' : 'vestuarios'}">
+                {#each { length: Math.min(cuantos, 3) } as _, p (p)}<i></i>{/each}
               </span>
             {/if}
           </a>
@@ -88,35 +98,84 @@
   <aside class="panel">
     <h2>{formatoLargo(data.dia)}</h2>
 
-    {#if delDia.length}
-      <ul class="entradas">
-        {#each delDia as entrada (entrada.id)}
-          <li>
-            <div class="texto">
-              <p class="titulo">{entrada.titulo}</p>
-              {#if entrada.nota}<p class="nota">{entrada.nota}</p>{/if}
-            </div>
-            <form method="POST" action="?/eliminar" use:enhance>
-              <input type="hidden" name="id" value={entrada.id} />
-              <button class="borrar" type="submit" aria-label="Eliminar {entrada.titulo}">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-              </button>
-            </form>
-          </li>
-        {/each}
-      </ul>
-    {:else}
-      <p class="vacio">Nada este día todavía.</p>
+    {#if form && 'error' in form}
+      <p class="error">{form.error}</p>
     {/if}
 
-    <form class="alta" method="POST" action="?/agregar" use:enhance>
+    {#each delDia as vestuario (vestuario.id)}
+      {@const piezas = piezasPorVestuario.get(vestuario.id) ?? []}
+      <article class="vestuario">
+        <header>
+          <h3>{vestuario.etiqueta ?? 'Vestuario'}</h3>
+          <form method="POST" action="?/eliminarVestuario" use:enhance>
+            <input type="hidden" name="id" value={vestuario.id} />
+            <button class="borrar" type="submit" aria-label="Eliminar vestuario">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
+          </form>
+        </header>
+
+        <ul class="slots">
+          {#each TIPOS_PRENDA as tipo (tipo)}
+            {@const delSlot = piezas.filter((p) => p.tipo === tipo)}
+            <li class:sin-nada={delSlot.length === 0}>
+              <span class="slot">{ETIQUETA_TIPO[tipo]}</span>
+              {#if delSlot.length}
+                <span class="puestas">
+                  {#each delSlot as pieza (pieza.id)}
+                    <span class="chip">
+                      {pieza.nombre}
+                      <form method="POST" action="?/quitarPrenda" use:enhance>
+                        <input type="hidden" name="id" value={pieza.id} />
+                        <button type="submit" aria-label="Quitar {pieza.nombre}">×</button>
+                      </form>
+                    </span>
+                  {/each}
+                </span>
+              {:else}
+                <span class="nada">—</span>
+              {/if}
+            </li>
+          {/each}
+        </ul>
+
+        {#if data.catalogo.length}
+          <form class="poner" method="POST" action="?/agregarPrenda" use:enhance>
+            <input type="hidden" name="vestuarioId" value={vestuario.id} />
+            <select name="prendaId" required>
+              <option value="" selected>Poner prenda…</option>
+              {#each TIPOS_PRENDA as tipo (tipo)}
+                {@const opciones = data.catalogo.filter((p) => p.tipo === tipo)}
+                {#if opciones.length}
+                  <optgroup label={ETIQUETA_TIPO[tipo]}>
+                    {#each opciones as prenda (prenda.id)}
+                      <option value={prenda.id}>{prenda.nombre}</option>
+                    {/each}
+                  </optgroup>
+                {/if}
+              {/each}
+            </select>
+            <button class="chico" type="submit">Poner</button>
+          </form>
+        {/if}
+      </article>
+    {:else}
+      <p class="vacio">Nada este día todavía.</p>
+    {/each}
+
+    {#if data.catalogo.length === 0}
+      <p class="aviso">
+        Tu guardarropa está vacío. Da de alta prendas en
+        <a href="/guardarropa">Guardarropa</a> y luego arma el vestuario aquí.
+      </p>
+    {/if}
+
+    <form class="nuevo" method="POST" action="?/crearVestuario" use:enhance>
       <input type="hidden" name="fecha" value={data.dia} />
-      <Input name="titulo" placeholder="Qué va este día" autocomplete="off" required />
-      <Textarea name="nota" placeholder="Nota (opcional)" rows={3} />
-      {#if form && 'error' in form}
-        <p class="error">{form.error}</p>
-      {/if}
-      <Button type="submit">Agregar</Button>
+      <Input name="etiqueta" placeholder="Etiqueta: día, noche, gym… (opcional)" autocomplete="off" />
+      <Button type="submit">
+        {delDia.length ? 'Otro vestuario este día' : 'Crear vestuario'}
+      </Button>
     </form>
   </aside>
 </section>
@@ -124,7 +183,7 @@
 <style>
   .calendario {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: minmax(0, 1fr) 360px;
     gap: 1.25rem;
     align-items: start;
     padding: 0.75rem 0.25rem 1.5rem;
@@ -263,44 +322,132 @@
     text-transform: capitalize;
   }
 
-  .entradas {
+  .vestuario {
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid rgba(220, 38, 38, 0.14);
+  }
+  .vestuario header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .vestuario h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #b91c1c;
+  }
+
+  .slots {
     list-style: none;
-    margin: 0 0 1rem;
+    margin: 0 0 0.6rem;
     padding: 0;
     display: flex;
     flex-direction: column;
+    gap: 0.28rem;
   }
-  .entradas li {
-    display: flex;
-    align-items: flex-start;
+  .slots li {
+    display: grid;
+    grid-template-columns: 8.5rem minmax(0, 1fr);
     gap: 0.5rem;
-    padding: 0.6rem 0;
-    border-top: 1px solid rgba(220, 38, 38, 0.14);
+    align-items: baseline;
   }
-  .texto {
+  .slot {
+    font-size: 0.72rem;
+    color: rgba(24, 24, 27, 0.45);
+  }
+  .slots li.sin-nada .slot {
+    color: rgba(24, 24, 27, 0.28);
+  }
+  .nada {
+    font-size: 0.8rem;
+    color: rgba(24, 24, 27, 0.25);
+  }
+
+  .puestas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.12rem 0.25rem 0.12rem 0.5rem;
+    font-size: 0.78rem;
+    color: var(--ink);
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.24);
+    border-radius: 999px;
+    overflow-wrap: anywhere;
+  }
+  .chip button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    font: inherit;
+    font-size: 0.9rem;
+    line-height: 1;
+    color: rgba(24, 24, 27, 0.4);
+    background: none;
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.16s ease, color 0.16s ease;
+  }
+  .chip button:hover {
+    background: rgba(220, 38, 38, 0.25);
+    color: #7f1d1d;
+  }
+
+  .poner {
+    display: flex;
+    gap: 0.35rem;
+  }
+  .poner select {
     flex: 1;
     min-width: 0;
-  }
-  .titulo {
-    margin: 0;
-    font-size: 0.9rem;
-    color: var(--ink);
-    overflow-wrap: anywhere;
-  }
-  .nota {
-    margin: 0.2rem 0 0;
+    height: 30px;
+    padding: 0 0.4rem;
+    font: inherit;
     font-size: 0.8rem;
-    color: var(--ink-soft);
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    border-radius: 8px;
   }
+  .chico {
+    padding: 0.22rem 0.6rem;
+    font: inherit;
+    font-size: 0.78rem;
+    color: rgba(24, 24, 27, 0.6);
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+  }
+  .chico:hover {
+    background: rgba(220, 38, 38, 0.12);
+    border-color: rgba(220, 38, 38, 0.45);
+    color: #b91c1c;
+  }
+
   .borrar {
     display: inline-flex;
-    padding: 0.25rem;
+    padding: 0.2rem;
     background: none;
     border: 1px solid transparent;
     border-radius: 7px;
-    color: rgba(24, 24, 27, 0.4);
+    color: rgba(24, 24, 27, 0.35);
     cursor: pointer;
     transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
   }
@@ -310,23 +457,28 @@
     color: #b91c1c;
   }
 
-  .vacio {
+  .vacio,
+  .aviso {
     margin: 0 0 1rem;
     font-size: 0.85rem;
+    line-height: 1.45;
     color: rgba(24, 24, 27, 0.5);
   }
+  .aviso a {
+    color: #b91c1c;
+  }
+  .error {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    color: #b91c1c;
+  }
 
-  .alta {
+  .nuevo {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     padding-top: 0.9rem;
     border-top: 1px solid rgba(220, 38, 38, 0.14);
-  }
-  .error {
-    margin: 0;
-    font-size: 0.8rem;
-    color: #b91c1c;
   }
 
   @media (max-width: 860px) {

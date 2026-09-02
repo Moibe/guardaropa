@@ -23,7 +23,7 @@
   const items = [
     { href: '/', label: 'Inicio' },
     { href: '/calendario', label: 'Calendario' },
-    { href: '/seccion-tres', label: 'Sección tres' }
+    { href: '/guardarropa', label: 'Guardarropa' }
   ];
 </script>
 

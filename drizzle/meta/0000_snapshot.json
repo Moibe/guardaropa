@@ -1,11 +1,160 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "10d962bb-cf39-4104-aea5-4d6e60f3aaf0",
+  "id": "ffd33493-55e0-4371-8105-76ccc53b5df7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "entradas": {
-      "name": "entradas",
+    "prendas": {
+      "name": "prendas",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activa": {
+          "name": "activa",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "creado": {
+          "name": "creado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "prendas_tipo_idx": {
+          "name": "prendas_tipo_idx",
+          "columns": [
+            "tipo"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "vestuario_prendas": {
+      "name": "vestuario_prendas",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "vestuario_id": {
+          "name": "vestuario_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "prenda_id": {
+          "name": "prenda_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "capa": {
+          "name": "capa",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "vestuario_prendas_vestuario_idx": {
+          "name": "vestuario_prendas_vestuario_idx",
+          "columns": [
+            "vestuario_id"
+          ],
+          "isUnique": false
+        },
+        "vestuario_prendas_prenda_idx": {
+          "name": "vestuario_prendas_prenda_idx",
+          "columns": [
+            "prenda_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "vestuario_prendas_vestuario_id_vestuarios_id_fk": {
+          "name": "vestuario_prendas_vestuario_id_vestuarios_id_fk",
+          "tableFrom": "vestuario_prendas",
+          "tableTo": "vestuarios",
+          "columnsFrom": [
+            "vestuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "vestuario_prendas_prenda_id_prendas_id_fk": {
+          "name": "vestuario_prendas_prenda_id_prendas_id_fk",
+          "tableFrom": "vestuario_prendas",
+          "tableTo": "prendas",
+          "columnsFrom": [
+            "prenda_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "vestuarios": {
+      "name": "vestuarios",
       "columns": {
         "id": {
           "name": "id",
@@ -21,15 +170,15 @@
           "notNull": true,
           "autoincrement": false
         },
-        "titulo": {
-          "name": "titulo",
+        "etiqueta": {
+          "name": "etiqueta",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
-        "nota": {
-          "name": "nota",
+        "notas": {
+          "name": "notas",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -44,8 +193,8 @@
         }
       },
       "indexes": {
-        "entradas_fecha_idx": {
-          "name": "entradas_fecha_idx",
+        "vestuarios_fecha_idx": {
+          "name": "vestuarios_fecha_idx",
           "columns": [
             "fecha"
           ],
