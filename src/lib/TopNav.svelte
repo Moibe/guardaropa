@@ -21,7 +21,6 @@
 
   // Edita estos items por las secciones reales de tu app.
   const items = [
-    { href: '/', label: 'Inicio' },
     { href: '/calendario', label: 'Calendario' },
     { href: '/guardarropa', label: 'Guardarropa' }
   ];
