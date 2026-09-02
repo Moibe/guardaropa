@@ -1,9 +1,9 @@
 import { fail } from '@sveltejs/kit';
 import { and, asc, between, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
-import { prendas, vestuarioPrendas, vestuarios } from '$lib/server/db/schema';
+import { prendas, vestuarioPrendas, vestuarios, type Prenda } from '$lib/server/db/schema';
 import { aIsoDia, aIsoMes, esIsoDia, esIsoMes, mesDelDia } from '$lib/fechas';
-import { esTipoPrenda } from '$lib/prendas';
+import { esTipoPrenda, normaliza } from '$lib/prendas';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ url }) => {
@@ -71,6 +71,36 @@ export const load: PageServerLoad = ({ url }) => {
 	return { mes, dia, hoy: isoHoy, poner, vestuarios: delMes, piezas, catalogo };
 };
 
+/**
+ * Mete una prenda en un vestuario, encimándola sobre lo que ya haya en su slot.
+ * Devuelve false si esa prenda ya estaba puesta: la misma prenda física no se
+ * puede llevar dos veces en el mismo vestuario.
+ */
+function ponerEnVestuario(vestuarioId: number, prenda: Prenda): boolean {
+	const yaPuesta = db
+		.select({ id: vestuarioPrendas.id })
+		.from(vestuarioPrendas)
+		.where(
+			and(eq(vestuarioPrendas.vestuarioId, vestuarioId), eq(vestuarioPrendas.prendaId, prenda.id))
+		)
+		.get();
+	if (yaPuesta) return false;
+
+	// La capa nueva va encima de lo que ya haya en ese mismo slot: el slot es el
+	// tipo de la prenda, así que se cuenta cuántas del mismo tipo trae el vestuario.
+	const fila = db
+		.select({ cuantas: sql<number>`count(*)` })
+		.from(vestuarioPrendas)
+		.innerJoin(prendas, eq(vestuarioPrendas.prendaId, prendas.id))
+		.where(and(eq(vestuarioPrendas.vestuarioId, vestuarioId), eq(prendas.tipo, prenda.tipo)))
+		.get();
+
+	db.insert(vestuarioPrendas)
+		.values({ vestuarioId, prendaId: prenda.id, capa: fila?.cuantas ?? 0 })
+		.run();
+	return true;
+}
+
 export const actions: Actions = {
 	crearVestuario: async ({ request }) => {
 		const datos = await request.formData();
@@ -109,18 +139,43 @@ export const actions: Actions = {
 		const prenda = db.select().from(prendas).where(eq(prendas.id, prendaId)).get();
 		if (!prenda) return fail(404, { error: 'Esa prenda no existe.' });
 
-		// La capa nueva va encima de lo que ya haya en ese mismo slot: el slot es el
-		// tipo de la prenda, así que se cuenta cuántas del mismo tipo trae el vestuario.
-		const fila = db
-			.select({ cuantas: sql<number>`count(*)` })
-			.from(vestuarioPrendas)
-			.innerJoin(prendas, eq(vestuarioPrendas.prendaId, prendas.id))
-			.where(and(eq(vestuarioPrendas.vestuarioId, vestuarioId), eq(prendas.tipo, prenda.tipo)))
-			.get();
+		if (!ponerEnVestuario(vestuarioId, prenda)) {
+			return fail(409, { error: 'Ya traes puesta esa prenda.' });
+		}
+		return { ok: true };
+	},
 
-		db.insert(vestuarioPrendas)
-			.values({ vestuarioId, prendaId, capa: fila?.cuantas ?? 0 })
-			.run();
+	/**
+	 * Escribir el nombre en el renglón. Si ya existe una prenda de ese tipo con ese
+	 * nombre se usa esa (comparando normalizado, así "Polo roja" y "polo  ROJA" son
+	 * la misma); si no existe, se da de alta y se pone, en un solo paso.
+	 */
+	ponerPorNombre: async ({ request }) => {
+		const datos = await request.formData();
+		const vestuarioId = Number(datos.get('vestuarioId'));
+		const tipo = String(datos.get('tipo') ?? '');
+		const nombre = String(datos.get('nombre') ?? '').trim();
+
+		if (!Number.isInteger(vestuarioId)) return fail(400, { error: 'Ese vestuario no existe.' });
+		if (!esTipoPrenda(tipo)) return fail(400, { error: 'Ese tipo de prenda no existe.' });
+		if (!nombre) return fail(400, { error: 'Escribe el nombre de la prenda.' });
+
+		const vestuario = db.select().from(vestuarios).where(eq(vestuarios.id, vestuarioId)).get();
+		if (!vestuario) return fail(404, { error: 'Ese vestuario no existe.' });
+
+		const delTipo = db.select().from(prendas).where(eq(prendas.tipo, tipo)).all();
+		let prenda = delTipo.find((p) => normaliza(p.nombre) === normaliza(nombre));
+
+		if (!prenda) {
+			prenda = db.insert(prendas).values({ tipo, nombre }).returning().get();
+		} else if (!prenda.activa) {
+			// Estaba archivada: volver a usarla la revive, en vez de crear una duplicada.
+			db.update(prendas).set({ activa: true }).where(eq(prendas.id, prenda.id)).run();
+		}
+
+		if (!ponerEnVestuario(vestuarioId, prenda)) {
+			return fail(409, { error: 'Ya traes puesta esa prenda.' });
+		}
 		return { ok: true };
 	},
 

@@ -75,6 +75,21 @@ export function slotsCubiertos(tipo: TipoPrenda): readonly TipoPrenda[] {
 	return CUBRE[tipo] ?? [tipo];
 }
 
+/**
+ * Para comparar y buscar nombres de prendas: sin acentos, sin mayúsculas, sin
+ * espacios de sobra. Así "Playera Polo Roja" y "playera polo roja" son la misma,
+ * y buscar "polo" la encuentra. Lo usan el buscador del picker y el servidor al
+ * decidir si una prenda ya existe o hay que darla de alta — deben coincidir.
+ */
+export function normaliza(texto: string): string {
+	return texto
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.trim()
+		.replace(/\s+/g, ' ')
+		.toLowerCase();
+}
+
 export function esTipoPrenda(valor: string): valor is TipoPrenda {
 	return (TIPOS_PRENDA as readonly string[]).includes(valor);
 }

@@ -10,6 +10,7 @@
     mesVecino,
     nombreMes
   } from '$lib/fechas';
+  import SlotPicker from '$lib/SlotPicker.svelte';
   import { ETIQUETA_TIPO, ICONO_TIPO, TIPOS_PRENDA, esCobertor, slotsCubiertos } from '$lib/prendas';
   import type { TipoPrenda } from '$lib/prendas';
   import type { ActionData, PageData } from './$types';
@@ -190,24 +191,15 @@
             </li>
             {#if abierto}
               <li class="picker">
-                {#if opciones.length}
-                  <div class="opciones">
-                    {#each opciones as prenda (prenda.id)}
-                      <form method="POST" action={accion('agregarPrenda', `&poner=${clave}`)} use:enhance>
-                        <input type="hidden" name="vestuarioId" value={vestuario.id} />
-                        <input type="hidden" name="prendaId" value={prenda.id} />
-                        <button class="opcion" type="submit">{prenda.nombre}</button>
-                      </form>
-                    {/each}
-                  </div>
-                {:else if data.catalogo.some((p) => p.tipo === tipo)}
-                  <p class="sin-opciones">Ya traes puesto todo lo que tienes de este tipo.</p>
-                {:else}
-                  <p class="sin-opciones">
-                    No tienes prendas de este tipo.
-                    <a href="/guardarropa">Dar una de alta</a>
-                  </p>
-                {/if}
+                <SlotPicker
+                  vestuarioId={vestuario.id}
+                  {tipo}
+                  etiqueta={ETIQUETA_TIPO[tipo]}
+                  opciones={opciones}
+                  hayDelTipo={data.catalogo.some((p) => p.tipo === tipo)}
+                  accionPoner={accion('ponerPorNombre', `&poner=${clave}`)}
+                  accionAgregar={accion('agregarPrenda', `&poner=${clave}`)}
+                />
               </li>
             {/if}
           {/each}
@@ -495,35 +487,6 @@
   .chip button:hover {
     background: rgba(220, 38, 38, 0.25);
     color: #7f1d1d;
-  }
-
-  .opciones {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-  }
-  .opcion {
-    padding: 0.22rem 0.65rem;
-    font: inherit;
-    font-size: 0.78rem;
-    color: #b91c1c;
-    background: rgba(255, 255, 255, 0.75);
-    border: 1px solid rgba(220, 38, 38, 0.3);
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background 0.16s ease, border-color 0.16s ease;
-  }
-  .opcion:hover {
-    background: rgba(220, 38, 38, 0.16);
-    border-color: rgba(220, 38, 38, 0.55);
-  }
-  .sin-opciones {
-    margin: 0;
-    font-size: 0.75rem;
-    color: rgba(24, 24, 27, 0.45);
-  }
-  .sin-opciones a {
-    color: #b91c1c;
   }
 
   .borrar {
