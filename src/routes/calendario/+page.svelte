@@ -60,6 +60,20 @@
     return mapa;
   }
 
+  const qs = $derived(`mes=${data.mes}&dia=${data.dia}`);
+
+  // Las acciones llevan el día pegado: sin JS, un POST a "?/agregarPrenda" pelón
+  // te regresaría al día de hoy en vez de al que estabas viendo.
+  function accion(nombre: string, extra = '') {
+    return `?/${nombre}&${qs}${extra}`;
+  }
+  function urlPoner(clave: string) {
+    return `?${qs}&poner=${clave}`;
+  }
+  function urlCerrar() {
+    return `?${qs}`;
+  }
+
   function urlDia(iso: string) {
     return `?mes=${mesDelDia(iso)}&dia=${iso}`;
   }
@@ -127,7 +141,7 @@
       <article class="vestuario">
         <header>
           <h3>{vestuario.etiqueta ?? 'Vestuario'}</h3>
-          <form method="POST" action="?/eliminarVestuario" use:enhance>
+          <form method="POST" action={accion('eliminarVestuario')} use:enhance>
             <input type="hidden" name="id" value={vestuario.id} />
             <button class="borrar" type="submit" aria-label="Eliminar vestuario">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
@@ -138,55 +152,67 @@
         <ul class="slots">
           {#each TIPOS_PRENDA as tipo (tipo)}
             {@const delSlot = piezas.filter((p) => p.tipo === tipo)}
-            <!-- Vestido y overol solo aparecen si traen algo: si no, serían dos
-                 renglones en "—" casi todos los días. -->
-            {#if delSlot.length || !esCobertor(tipo)}
-              <li class:sin-nada={delSlot.length === 0}>
-                <span class="slot">
-                  <span class="ico" aria-hidden="true">{ICONO_TIPO[tipo]}</span>
-                  {ETIQUETA_TIPO[tipo]}
+            {@const clave = `${vestuario.id}:${tipo}`}
+            {@const abierto = data.poner === clave}
+            <!-- Lo que ya trae puesto no se vuelve a ofrecer: la misma prenda
+                 física no se puede llevar dos veces en el mismo vestuario. -->
+            {@const opciones = data.catalogo.filter(
+              (p) => p.tipo === tipo && !piezas.some((x) => x.prendaId === p.id)
+            )}
+            <li class:sin-nada={delSlot.length === 0} class:abierto>
+              <a class="slot" href={abierto ? urlCerrar() : urlPoner(clave)}>
+                <span class="ico" aria-hidden="true">{ICONO_TIPO[tipo]}</span>
+                {ETIQUETA_TIPO[tipo]}
+              </a>
+              {#if delSlot.length}
+                <span class="puestas">
+                  {#each delSlot as pieza (pieza.id)}
+                    <span class="chip">
+                      {pieza.nombre}
+                      <form method="POST" action={accion('quitarPrenda')} use:enhance>
+                        <input type="hidden" name="id" value={pieza.id} />
+                        <button type="submit" aria-label="Quitar {pieza.nombre}">×</button>
+                      </form>
+                    </span>
+                  {/each}
                 </span>
-                {#if delSlot.length}
-                  <span class="puestas">
-                    {#each delSlot as pieza (pieza.id)}
-                      <span class="chip">
-                        {pieza.nombre}
-                        <form method="POST" action="?/quitarPrenda" use:enhance>
-                          <input type="hidden" name="id" value={pieza.id} />
-                          <button type="submit" aria-label="Quitar {pieza.nombre}">×</button>
-                        </form>
-                      </span>
+              {:else}
+                <!-- El hueco también es link, para que en un renglón vacío se pueda
+                     hacer clic en cualquier parte, no solo en la etiqueta. -->
+                <a class="relleno" href={abierto ? urlCerrar() : urlPoner(clave)}>
+                  {#if cubiertos.has(tipo)}
+                    <span class="cubierto">cubierto por {cubiertos.get(tipo)?.join(', ')}</span>
+                  {:else}
+                    <span class="nada">—</span>
+                  {/if}
+                </a>
+              {/if}
+            </li>
+            {#if abierto}
+              <li class="picker">
+                {#if opciones.length}
+                  <div class="opciones">
+                    {#each opciones as prenda (prenda.id)}
+                      <form method="POST" action={accion('agregarPrenda', `&poner=${clave}`)} use:enhance>
+                        <input type="hidden" name="vestuarioId" value={vestuario.id} />
+                        <input type="hidden" name="prendaId" value={prenda.id} />
+                        <button class="opcion" type="submit">{prenda.nombre}</button>
+                      </form>
                     {/each}
-                  </span>
-                {:else if cubiertos.has(tipo)}
-                  <span class="cubierto">cubierto por {cubiertos.get(tipo)?.join(', ')}</span>
+                  </div>
+                {:else if data.catalogo.some((p) => p.tipo === tipo)}
+                  <p class="sin-opciones">Ya traes puesto todo lo que tienes de este tipo.</p>
                 {:else}
-                  <span class="nada">—</span>
+                  <p class="sin-opciones">
+                    No tienes prendas de este tipo.
+                    <a href="/guardarropa">Dar una de alta</a>
+                  </p>
                 {/if}
               </li>
             {/if}
           {/each}
         </ul>
 
-        {#if data.catalogo.length}
-          <form class="poner" method="POST" action="?/agregarPrenda" use:enhance>
-            <input type="hidden" name="vestuarioId" value={vestuario.id} />
-            <select name="prendaId" required>
-              <option value="" selected>Poner prenda…</option>
-              {#each TIPOS_PRENDA as tipo (tipo)}
-                {@const opciones = data.catalogo.filter((p) => p.tipo === tipo)}
-                {#if opciones.length}
-                  <optgroup label="{ICONO_TIPO[tipo]} {ETIQUETA_TIPO[tipo]}">
-                    {#each opciones as prenda (prenda.id)}
-                      <option value={prenda.id}>{prenda.nombre}</option>
-                    {/each}
-                  </optgroup>
-                {/if}
-              {/each}
-            </select>
-            <button class="chico" type="submit">Poner</button>
-          </form>
-        {/if}
       </article>
     {:else}
       <p class="vacio">Nada este día todavía.</p>
@@ -199,7 +225,7 @@
       </p>
     {/if}
 
-    <form class="nuevo" method="POST" action="?/crearVestuario" use:enhance>
+    <form class="nuevo" method="POST" action={accion('crearVestuario')} use:enhance>
       <input type="hidden" name="fecha" value={data.dia} />
       <Input name="etiqueta" placeholder="Etiqueta: día, noche, gym… (opcional)" autocomplete="off" />
       <Button type="submit">
@@ -384,11 +410,36 @@
     display: grid;
     grid-template-columns: 9.5rem minmax(0, 1fr);
     gap: 0.5rem;
-    align-items: baseline;
+    align-items: center;
+    border-radius: 8px;
+    transition: background 0.16s ease;
   }
+  .slots li:hover {
+    background: rgba(220, 38, 38, 0.07);
+  }
+  .slots li.abierto {
+    background: rgba(220, 38, 38, 0.1);
+  }
+  .slots li.picker,
+  .slots li.picker:hover {
+    display: block;
+    padding: 0.1rem 0.35rem 0.55rem;
+    background: none;
+  }
+
   .slot {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.35rem;
     font-size: 0.72rem;
     color: rgba(24, 24, 27, 0.45);
+    text-decoration: none;
+  }
+  .relleno {
+    display: block;
+    padding: 0.3rem 0;
+    text-decoration: none;
   }
   .ico {
     font-size: 0.9rem;
@@ -446,36 +497,32 @@
     color: #7f1d1d;
   }
 
-  .poner {
+  .opciones {
     display: flex;
-    gap: 0.35rem;
+    flex-wrap: wrap;
+    gap: 0.3rem;
   }
-  .poner select {
-    flex: 1;
-    min-width: 0;
-    height: 30px;
-    padding: 0 0.4rem;
-    font: inherit;
-    font-size: 0.8rem;
-    color: var(--ink);
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(220, 38, 38, 0.25);
-    border-radius: 8px;
-  }
-  .chico {
-    padding: 0.22rem 0.6rem;
+  .opcion {
+    padding: 0.22rem 0.65rem;
     font: inherit;
     font-size: 0.78rem;
-    color: rgba(24, 24, 27, 0.6);
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid rgba(220, 38, 38, 0.2);
-    border-radius: 8px;
+    color: #b91c1c;
+    background: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    border-radius: 999px;
     cursor: pointer;
-    transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+    transition: background 0.16s ease, border-color 0.16s ease;
   }
-  .chico:hover {
-    background: rgba(220, 38, 38, 0.12);
-    border-color: rgba(220, 38, 38, 0.45);
+  .opcion:hover {
+    background: rgba(220, 38, 38, 0.16);
+    border-color: rgba(220, 38, 38, 0.55);
+  }
+  .sin-opciones {
+    margin: 0;
+    font-size: 0.75rem;
+    color: rgba(24, 24, 27, 0.45);
+  }
+  .sin-opciones a {
     color: #b91c1c;
   }
 

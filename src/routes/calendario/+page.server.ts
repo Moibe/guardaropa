@@ -3,6 +3,7 @@ import { and, asc, between, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { prendas, vestuarioPrendas, vestuarios } from '$lib/server/db/schema';
 import { aIsoDia, aIsoMes, esIsoDia, esIsoMes, mesDelDia } from '$lib/fechas';
+import { esTipoPrenda } from '$lib/prendas';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ url }) => {
@@ -55,7 +56,19 @@ export const load: PageServerLoad = ({ url }) => {
 		.orderBy(asc(prendas.tipo), asc(prendas.nombre))
 		.all();
 
-	return { mes, dia, hoy: isoHoy, vestuarios: delMes, piezas, catalogo };
+	// Qué renglón de qué vestuario está abierto para elegir prenda, como
+	// '<vestuarioId>:<tipo>'. Vive en la URL igual que mes y día: sin estado de
+	// cliente, con back button, y funciona sin JS.
+	const ponerParam = url.searchParams.get('poner');
+	let poner: string | null = null;
+	if (ponerParam) {
+		const [idTexto, tipo] = ponerParam.split(':');
+		const id = Number(idTexto);
+		const abrible = delMes.some((v) => v.id === id && v.fecha === dia);
+		if (Number.isInteger(id) && tipo && esTipoPrenda(tipo) && abrible) poner = ponerParam;
+	}
+
+	return { mes, dia, hoy: isoHoy, poner, vestuarios: delMes, piezas, catalogo };
 };
 
 export const actions: Actions = {
