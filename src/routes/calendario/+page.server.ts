@@ -37,6 +37,7 @@ export const load: PageServerLoad = ({ url }) => {
 					capa: vestuarioPrendas.capa,
 					prendaId: prendas.id,
 					nombre: prendas.nombre,
+					icono: prendas.icono,
 					posicion: prendas.posicion,
 					color: prendas.color
 				})
@@ -50,7 +51,12 @@ export const load: PageServerLoad = ({ url }) => {
 	// Solo las prendas activas se ofrecen en el selector; las archivadas siguen
 	// apareciendo en los vestuarios donde ya estaban.
 	const catalogo = db
-		.select({ id: prendas.id, nombre: prendas.nombre, posicion: prendas.posicion })
+		.select({
+			id: prendas.id,
+			nombre: prendas.nombre,
+			icono: prendas.icono,
+			posicion: prendas.posicion
+		})
 		.from(prendas)
 		.where(eq(prendas.activa, true))
 		.orderBy(asc(prendas.posicion), asc(prendas.nombre))

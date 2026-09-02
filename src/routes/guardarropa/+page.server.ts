@@ -5,7 +5,7 @@ import { prendas, vestuarioPrendas } from '$lib/server/db/schema';
 import { esPosicion } from '$lib/prendas';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = () => {
+export const load: PageServerLoad = ({ url }) => {
 	const catalogo = db
 		.select()
 		.from(prendas)
@@ -23,7 +23,12 @@ export const load: PageServerLoad = () => {
 	const usos: Record<number, number> = {};
 	for (const { prendaId, veces } of conteos) usos[prendaId] = veces;
 
-	return { catalogo, usos };
+	// Qué tarjeta está abierta para editar. Vive en la URL, igual que el renglón
+	// abierto del calendario: sin estado de cliente y con botón de atrás.
+	const editarParam = Number(url.searchParams.get('editar'));
+	const editar = catalogo.some((p) => p.id === editarParam) ? editarParam : null;
+
+	return { catalogo, usos, editar };
 };
 
 /** Cuántos vestuarios usan esta prenda. */
@@ -49,6 +54,34 @@ export const actions: Actions = {
 
 		db.insert(prendas)
 			.values({ posicion, nombre, color: color || null, notas: notas || null })
+			.run();
+		return { ok: true };
+	},
+
+	/** Guardar los cambios de una prenda ya existente. */
+	actualizar: async ({ request }) => {
+		const datos = await request.formData();
+		const id = Number(datos.get('id'));
+		const nombre = String(datos.get('nombre') ?? '').trim();
+		const icono = String(datos.get('icono') ?? '').trim();
+		const color = String(datos.get('color') ?? '').trim();
+		const notas = String(datos.get('notas') ?? '').trim();
+
+		if (!Number.isInteger(id)) return fail(400, { error: 'Esa prenda no existe.' });
+		if (!nombre) return fail(400, { error: 'La prenda necesita un nombre.' });
+
+		const existe = db.select({ id: prendas.id }).from(prendas).where(eq(prendas.id, id)).get();
+		if (!existe) return fail(404, { error: 'Esa prenda no existe.' });
+
+		db.update(prendas)
+			.set({
+				nombre,
+				// El ícono se guarda recortado: un emoji, no una frase.
+				icono: icono ? [...icono].slice(0, 3).join('') : null,
+				color: color || null,
+				notas: notas || null
+			})
+			.where(eq(prendas.id, id))
 			.run();
 		return { ok: true };
 	},

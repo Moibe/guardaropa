@@ -8,7 +8,7 @@
   import { enhance } from '$app/forms';
   import { normaliza } from '$lib/prendas';
 
-  type Opcion = { id: number; nombre: string };
+  type Opcion = { id: number; nombre: string; icono: string | null };
 
   let {
     vestuarioId,
@@ -61,7 +61,10 @@
       <form method="POST" action={accionAgregar} use:enhance>
         <input type="hidden" name="vestuarioId" value={vestuarioId} />
         <input type="hidden" name="prendaId" value={prenda.id} />
-        <button class="opcion" type="submit">{prenda.nombre}</button>
+        <button class="opcion" type="submit">
+          {#if prenda.icono}<span aria-hidden="true">{prenda.icono}</span>{/if}
+          {prenda.nombre}
+        </button>
       </form>
     {/each}
   </div>

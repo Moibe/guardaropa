@@ -149,6 +149,7 @@
                 <span class="puestas">
                   {#each puestas as pieza (pieza.id)}
                     <span class="chip">
+                      {#if pieza.icono}<span class="chip-ico" aria-hidden="true">{pieza.icono}</span>{/if}
                       <span class="nombre" title={pieza.nombre}>{pieza.nombre}</span>
                       <form method="POST" action={accion('quitarPrenda')} use:enhance>
                         <input type="hidden" name="id" value={pieza.id} />
@@ -439,6 +440,10 @@
   }
   /* Un nombre largo se recorta con puntos suspensivos en vez de partirse en dos
      renglones; el nombre completo queda en el title, al pasar el mouse. */
+  .chip-ico {
+    flex-shrink: 0;
+    font-size: 0.85rem;
+  }
   .chip .nombre {
     min-width: 0;
     overflow: hidden;

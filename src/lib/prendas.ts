@@ -60,6 +60,36 @@ export const ICONO_POSICION: Record<Posicion, string> = {
 };
 
 /**
+ * Paleta para el ícono de una prenda. Teclear un emoji en escritorio es incómodo
+ * (en Windows es Win + punto), así que se ofrecen a un clic los que sirven para
+ * ropa. No es una lista cerrada: el campo acepta cualquier emoji que pegues.
+ */
+export const EMOJI_PRENDA = [
+	'👕',
+	'👔',
+	'🧥',
+	'👗',
+	'👖',
+	'🩳',
+	'👘',
+	'🩱',
+	'🧦',
+	'👟',
+	'👠',
+	'👢',
+	'👡',
+	'🎩',
+	'🧢',
+	'🕶️',
+	'💍',
+	'⌚',
+	'👜',
+	'🧣',
+	'🧤',
+	'🎽'
+];
+
+/**
  * Para comparar y buscar nombres de prendas: sin acentos, sin mayúsculas, sin
  * espacios de sobra. Así "Playera Polo Roja" y "playera polo roja" son la misma,
  * y buscar "polo" la encuentra. Lo usan el buscador del picker y el servidor al

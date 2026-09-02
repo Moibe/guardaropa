@@ -1,0 +1,1 @@
+ALTER TABLE `prendas` ADD `icono` text;

@@ -3,6 +3,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Textarea } from '$lib/components/ui/textarea';
+  import PrendaEditor from '$lib/PrendaEditor.svelte';
   import { ETIQUETA_POSICION, ICONO_POSICION, POSICIONES } from '$lib/prendas';
   import type { ActionData, PageData } from './$types';
 
@@ -49,19 +50,25 @@
           <ul>
             {#each lista as prenda (prenda.id)}
               {@const usos = data.usos[prenda.id] ?? 0}
-              <li class:archivada={!prenda.activa}>
-                <div class="texto">
-                  <p class="nombre">
-                    {prenda.nombre}
-                    {#if prenda.color}<span class="color">{prenda.color}</span>{/if}
-                    {#if !prenda.activa}<span class="tag">archivada</span>{/if}
-                  </p>
-                  {#if prenda.notas}<p class="notas">{prenda.notas}</p>{/if}
-                  <p class="usos">
-                    {usos === 0 ? 'sin usar' : `usada ${usos} ${usos === 1 ? 'vez' : 'veces'}`}
-                  </p>
-                </div>
-                <div class="acciones">
+              <li class:archivada={!prenda.activa} class:editando={data.editar === prenda.id}>
+                {#if data.editar === prenda.id}
+                  <PrendaEditor {prenda} />
+                {:else}
+                  <a class="texto" href="?editar={prenda.id}">
+                    <p class="nombre">
+                      {#if prenda.icono}
+                        <span class="icono" aria-hidden="true">{prenda.icono}</span>
+                      {/if}
+                      {prenda.nombre}
+                      {#if prenda.color}<span class="color">{prenda.color}</span>{/if}
+                      {#if !prenda.activa}<span class="tag">archivada</span>{/if}
+                    </p>
+                    {#if prenda.notas}<p class="notas">{prenda.notas}</p>{/if}
+                    <p class="usos">
+                      {usos === 0 ? 'sin usar' : `usada ${usos} ${usos === 1 ? 'vez' : 'veces'}`}
+                    </p>
+                  </a>
+                  <div class="acciones">
                   <form method="POST" action="?/alternarArchivo" use:enhance>
                     <input type="hidden" name="id" value={prenda.id} />
                     <button class="chico" type="submit">
@@ -75,8 +82,9 @@
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
                       </button>
                     </form>
-                  {/if}
-                </div>
+                    {/if}
+                  </div>
+                {/if}
               </li>
             {/each}
           </ul>
@@ -189,6 +197,7 @@
     gap: 0.5rem;
   }
   .grupo li {
+    transition: background 0.16s ease, border-color 0.16s ease;
     display: flex;
     align-items: flex-start;
     gap: 0.5rem;
@@ -201,9 +210,24 @@
     opacity: 0.55;
   }
 
+  /* La tarjeta se abre al hacer clic en su texto; las acciones quedan fuera del
+     link para que Archivar y Eliminar sigan siendo botones propios. */
   .texto {
     flex: 1;
     min-width: 0;
+    color: inherit;
+    text-decoration: none;
+  }
+  .grupo li:not(.editando):hover {
+    border-color: rgba(220, 38, 38, 0.42);
+    background: rgba(255, 255, 255, 0.72);
+  }
+  .grupo li.editando {
+    border-color: rgba(220, 38, 38, 0.5);
+    background: rgba(255, 255, 255, 0.78);
+  }
+  .icono {
+    font-size: 1rem;
   }
   .nombre {
     display: flex;
