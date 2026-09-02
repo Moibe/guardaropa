@@ -6,7 +6,7 @@
 // prendas en la misma posición (capas).
 //
 // El orden del arreglo es el orden en que se pinta, y NO es el orden en que uno se
-// viste: arriba lo que se decide a diario (top, bottom, zapatos), luego interiores
+// viste: arriba lo que se decide a diario (top, bottom, chamarra, zapatos), luego interiores
 // y calcetines, y al final sombrero y accesorios.
 //
 // `accesorios` es la posición de varios por definición (aretes, reloj, cinturón),
@@ -19,6 +19,7 @@
 export const POSICIONES = [
 	'top',
 	'bottom',
+	'chamarra',
 	'zapatos',
 	'interior_superior',
 	'interior_inferior',
@@ -34,6 +35,7 @@ export const ETIQUETA_POSICION: Record<Posicion, string> = {
 	interior_inferior: 'Interior inferior',
 	top: 'Top',
 	bottom: 'Bottom',
+	chamarra: 'Chamarra',
 	calcetines: 'Calcetines',
 	zapatos: 'Zapatos',
 	sombrero: 'Sombrero',
@@ -50,6 +52,7 @@ export const ICONO_POSICION: Record<Posicion, string> = {
 	interior_inferior: '🩲',
 	top: '👕',
 	bottom: '👖',
+	chamarra: '🧥',
 	calcetines: '🧦',
 	zapatos: '👟',
 	sombrero: '🎩',
