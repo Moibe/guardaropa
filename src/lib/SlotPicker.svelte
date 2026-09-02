@@ -6,9 +6,10 @@
   // desmonta al navegar, así que el texto escrito se limpia solo al cambiar de
   // renglón, sin tener que resetearlo a mano.
   import { enhance } from '$app/forms';
+  import IconoPrenda from '$lib/IconoPrenda.svelte';
   import { normaliza } from '$lib/prendas';
 
-  type Opcion = { id: number; nombre: string; icono: string | null };
+  type Opcion = { id: number; nombre: string; icono: string | null; iconoColor: string | null };
 
   let {
     vestuarioId,
@@ -62,7 +63,9 @@
         <input type="hidden" name="vestuarioId" value={vestuarioId} />
         <input type="hidden" name="prendaId" value={prenda.id} />
         <button class="opcion" type="submit">
-          {#if prenda.icono}<span aria-hidden="true">{prenda.icono}</span>{/if}
+          {#if prenda.icono}
+            <IconoPrenda clave={prenda.icono} color={prenda.iconoColor} tam={15} />
+          {/if}
           {prenda.nombre}
         </button>
       </form>
@@ -108,6 +111,9 @@
     gap: 0.3rem;
   }
   .opcion {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     padding: 0.22rem 0.65rem;
     font: inherit;
     font-size: 0.78rem;

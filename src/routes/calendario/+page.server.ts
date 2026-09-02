@@ -38,6 +38,7 @@ export const load: PageServerLoad = ({ url }) => {
 					prendaId: prendas.id,
 					nombre: prendas.nombre,
 					icono: prendas.icono,
+					iconoColor: prendas.iconoColor,
 					posicion: prendas.posicion,
 					color: prendas.color
 				})
@@ -55,6 +56,7 @@ export const load: PageServerLoad = ({ url }) => {
 			id: prendas.id,
 			nombre: prendas.nombre,
 			icono: prendas.icono,
+			iconoColor: prendas.iconoColor,
 			posicion: prendas.posicion
 		})
 		.from(prendas)

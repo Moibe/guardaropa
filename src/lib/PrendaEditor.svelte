@@ -5,12 +5,14 @@
   // ícono elegido se monte y se desmonte con la tarjeta, sin resetearlo a mano.
   import { enhance } from '$app/forms';
   import { goto } from '$app/navigation';
-  import { EMOJI_PRENDA } from '$lib/prendas';
+  import IconoPrenda from '$lib/IconoPrenda.svelte';
+  import { CLAVES_ICONO, COLORES_PRENDA, COLOR_ICONO_DEFAULT, ICONOS } from '$lib/iconos';
 
   type Prenda = {
     id: number;
     nombre: string;
     icono: string | null;
+    iconoColor: string | null;
     color: string | null;
     notas: string | null;
   };
@@ -22,6 +24,8 @@
   // toca y de ahí el usuario lo edita libremente.
   // svelte-ignore state_referenced_locally
   let icono = $state(prenda.icono ?? '');
+  // svelte-ignore state_referenced_locally
+  let iconoColor = $state(prenda.iconoColor ?? COLOR_ICONO_DEFAULT);
 
   function enfocar(node: HTMLInputElement) {
     node.focus();
@@ -48,31 +52,51 @@
     <input class="campo" name="nombre" value={prenda.nombre} autocomplete="off" required use:enfocar />
   </label>
 
-  <label>
-    <span>Ícono</span>
-    <input
-      class="campo campo-icono"
-      name="icono"
-      bind:value={icono}
-      placeholder="Pega un emoji"
-      autocomplete="off"
-    />
-  </label>
+  <input type="hidden" name="icono" value={icono} />
+  <input type="hidden" name="iconoColor" value={iconoColor} />
 
-  <div class="paleta">
-    {#each EMOJI_PRENDA as emoji (emoji)}
-      <button
-        type="button"
-        class="emoji"
-        class:elegido={icono === emoji}
-        onclick={() => (icono = icono === emoji ? '' : emoji)}
-        aria-label="Usar {emoji} como ícono"
-        aria-pressed={icono === emoji}
-      >
-        {emoji}
-      </button>
-    {/each}
+  <div class="bloque">
+    <span class="rotulo">Ícono</span>
+    <div class="paleta">
+      {#each CLAVES_ICONO as clave (clave)}
+        <button
+          type="button"
+          class="dibujo"
+          class:elegido={icono === clave}
+          onclick={() => (icono = icono === clave ? '' : clave)}
+          aria-label="Usar {ICONOS[clave].nombre} como ícono"
+          aria-pressed={icono === clave}
+          title={ICONOS[clave].nombre}
+        >
+          <IconoPrenda {clave} color={iconoColor} tam={26} />
+        </button>
+      {/each}
+    </div>
   </div>
+
+  <!-- El color solo aplica al dibujo, así que no tiene caso ofrecerlo sin uno. -->
+  {#if icono}
+    <div class="bloque">
+      <span class="rotulo">Color del ícono</span>
+      <div class="paleta">
+        {#each COLORES_PRENDA as c (c.hex)}
+          <button
+            type="button"
+            class="muestra"
+            class:elegido={iconoColor.toLowerCase() === c.hex}
+            style="background: {c.hex}"
+            onclick={() => (iconoColor = c.hex)}
+            aria-label={c.nombre}
+            aria-pressed={iconoColor.toLowerCase() === c.hex}
+            title={c.nombre}
+          ></button>
+        {/each}
+        <label class="otro" title="Otro color">
+          <input type="color" bind:value={iconoColor} aria-label="Otro color" />
+        </label>
+      </div>
+    </div>
+  {/if}
 
   <label>
     <span>Color</span>
@@ -127,39 +151,81 @@
     border-color: rgba(220, 38, 38, 0.65);
     box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.15);
   }
-  .campo-icono {
-    width: 6rem;
-    text-align: center;
-    font-size: 1rem;
-  }
   textarea.campo {
     resize: vertical;
   }
 
+  .bloque {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+  .rotulo {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: rgba(24, 24, 27, 0.45);
+  }
   .paleta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.2rem;
+    gap: 0.25rem;
   }
-  .emoji {
-    width: 28px;
-    height: 28px;
+
+  .dibujo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
     padding: 0;
-    font-size: 0.95rem;
-    line-height: 1;
-    background: rgba(255, 255, 255, 0.65);
+    background: rgba(255, 255, 255, 0.75);
     border: 1px solid rgba(220, 38, 38, 0.18);
-    border-radius: 8px;
+    border-radius: 9px;
     cursor: pointer;
     transition: background 0.14s ease, border-color 0.14s ease;
   }
-  .emoji:hover {
-    background: rgba(220, 38, 38, 0.14);
+  .dibujo:hover {
     border-color: rgba(220, 38, 38, 0.45);
   }
-  .emoji.elegido {
-    background: rgba(220, 38, 38, 0.2);
+  .dibujo.elegido {
+    background: rgba(220, 38, 38, 0.14);
     border-color: rgba(220, 38, 38, 0.7);
+  }
+
+  .muestra {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid rgba(24, 24, 27, 0.22);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .muestra:hover {
+    transform: scale(1.12);
+  }
+  .muestra.elegido {
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 0 0 4px var(--red);
+  }
+  .otro {
+    display: inline-flex;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px dashed rgba(24, 24, 27, 0.35);
+    cursor: pointer;
+  }
+  .otro input {
+    width: 200%;
+    height: 200%;
+    margin: -50% 0 0 -50%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
   }
 
   .pie {

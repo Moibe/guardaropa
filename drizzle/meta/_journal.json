@@ -15,6 +15,13 @@
       "when": 1788332065164,
       "tag": "0001_tranquil_mole_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788332805484,
+      "tag": "0002_hesitant_punisher",
+      "breakpoints": true
     }
   ]
 }

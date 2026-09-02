@@ -15,10 +15,11 @@ export const prendas = sqliteTable(
 		id: integer('id').primaryKey({ autoIncrement: true }),
 		posicion: text('posicion', { enum: POSICIONES }).notNull(),
 		nombre: text('nombre').notNull(),
-		// Emoji con el que reconoces la prenda de un vistazo. Opcional: si no hay,
-		// la prenda se muestra solo con su nombre (la posición ya trae su propio
-		// ícono, repetirlo no diría nada).
+		// Clave de uno de los íconos dibujados (src/lib/iconos.ts) y el color con
+		// el que se pinta. Opcionales: sin ícono la prenda se muestra solo con su
+		// nombre — la posición ya trae el suyo, repetirlo no diría nada.
 		icono: text('icono'),
+		iconoColor: text('icono_color'),
 		color: text('color'),
 		notas: text('notas'),
 		activa: integer('activa', { mode: 'boolean' }).notNull().default(true),

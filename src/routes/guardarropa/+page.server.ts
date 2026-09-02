@@ -3,6 +3,7 @@ import { asc, eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { prendas, vestuarioPrendas } from '$lib/server/db/schema';
 import { esPosicion } from '$lib/prendas';
+import { esClaveIcono, esHex } from '$lib/iconos';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ url }) => {
@@ -64,6 +65,7 @@ export const actions: Actions = {
 		const id = Number(datos.get('id'));
 		const nombre = String(datos.get('nombre') ?? '').trim();
 		const icono = String(datos.get('icono') ?? '').trim();
+		const iconoColor = String(datos.get('iconoColor') ?? '').trim();
 		const color = String(datos.get('color') ?? '').trim();
 		const notas = String(datos.get('notas') ?? '').trim();
 
@@ -76,8 +78,10 @@ export const actions: Actions = {
 		db.update(prendas)
 			.set({
 				nombre,
-				// El ícono se guarda recortado: un emoji, no una frase.
-				icono: icono ? [...icono].slice(0, 3).join('') : null,
+				// Solo se guardan claves de íconos que existen de verdad, y colores con
+				// forma de hex: lo que venga de otro lado se descarta en silencio.
+				icono: esClaveIcono(icono) ? icono : null,
+				iconoColor: esClaveIcono(icono) && esHex(iconoColor) ? iconoColor : null,
 				color: color || null,
 				notas: notas || null
 			})

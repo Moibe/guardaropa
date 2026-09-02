@@ -3,6 +3,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Textarea } from '$lib/components/ui/textarea';
+  import IconoPrenda from '$lib/IconoPrenda.svelte';
   import PrendaEditor from '$lib/PrendaEditor.svelte';
   import { ETIQUETA_POSICION, ICONO_POSICION, POSICIONES } from '$lib/prendas';
   import type { ActionData, PageData } from './$types';
@@ -57,7 +58,7 @@
                   <a class="texto" href="?editar={prenda.id}">
                     <p class="nombre">
                       {#if prenda.icono}
-                        <span class="icono" aria-hidden="true">{prenda.icono}</span>
+                        <IconoPrenda clave={prenda.icono} color={prenda.iconoColor} tam={18} />
                       {/if}
                       {prenda.nombre}
                       {#if prenda.color}<span class="color">{prenda.color}</span>{/if}
@@ -225,9 +226,6 @@
   .grupo li.editando {
     border-color: rgba(220, 38, 38, 0.5);
     background: rgba(255, 255, 255, 0.78);
-  }
-  .icono {
-    font-size: 1rem;
   }
   .nombre {
     display: flex;
