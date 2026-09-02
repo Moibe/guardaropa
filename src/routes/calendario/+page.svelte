@@ -149,7 +149,7 @@
                 <span class="puestas">
                   {#each puestas as pieza (pieza.id)}
                     <span class="chip">
-                      {pieza.nombre}
+                      <span class="nombre" title={pieza.nombre}>{pieza.nombre}</span>
                       <form method="POST" action={accion('quitarPrenda')} use:enhance>
                         <input type="hidden" name="id" value={pieza.id} />
                         <button type="submit" aria-label="Quitar {pieza.nombre}">×</button>
@@ -206,7 +206,7 @@
 <style>
   .calendario {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-columns: minmax(0, 1fr) 380px;
     gap: 1.25rem;
     align-items: start;
     padding: 0.75rem 0.25rem 1.5rem;
@@ -376,7 +376,7 @@
   }
   .slots li {
     display: grid;
-    grid-template-columns: 9.5rem minmax(0, 1fr);
+    grid-template-columns: 8.25rem minmax(0, 1fr);
     gap: 0.5rem;
     align-items: center;
     border-radius: 8px;
@@ -435,7 +435,18 @@
     background: rgba(220, 38, 38, 0.1);
     border: 1px solid rgba(220, 38, 38, 0.24);
     border-radius: 999px;
-    overflow-wrap: anywhere;
+    max-width: 100%;
+  }
+  /* Un nombre largo se recorta con puntos suspensivos en vez de partirse en dos
+     renglones; el nombre completo queda en el title, al pasar el mouse. */
+  .chip .nombre {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chip form {
+    flex-shrink: 0;
   }
   .chip button {
     display: inline-flex;
