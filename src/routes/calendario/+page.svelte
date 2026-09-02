@@ -10,7 +10,7 @@
     mesVecino,
     nombreMes
   } from '$lib/fechas';
-  import { ETIQUETA_TIPO, TIPOS_PRENDA, esCobertor, slotsCubiertos } from '$lib/prendas';
+  import { ETIQUETA_TIPO, ICONO_TIPO, TIPOS_PRENDA, esCobertor, slotsCubiertos } from '$lib/prendas';
   import type { TipoPrenda } from '$lib/prendas';
   import type { ActionData, PageData } from './$types';
 
@@ -142,7 +142,10 @@
                  renglones en "—" casi todos los días. -->
             {#if delSlot.length || !esCobertor(tipo)}
               <li class:sin-nada={delSlot.length === 0}>
-                <span class="slot">{ETIQUETA_TIPO[tipo]}</span>
+                <span class="slot">
+                  <span class="ico" aria-hidden="true">{ICONO_TIPO[tipo]}</span>
+                  {ETIQUETA_TIPO[tipo]}
+                </span>
                 {#if delSlot.length}
                   <span class="puestas">
                     {#each delSlot as pieza (pieza.id)}
@@ -173,7 +176,7 @@
               {#each TIPOS_PRENDA as tipo (tipo)}
                 {@const opciones = data.catalogo.filter((p) => p.tipo === tipo)}
                 {#if opciones.length}
-                  <optgroup label={ETIQUETA_TIPO[tipo]}>
+                  <optgroup label="{ICONO_TIPO[tipo]} {ETIQUETA_TIPO[tipo]}">
                     {#each opciones as prenda (prenda.id)}
                       <option value={prenda.id}>{prenda.nombre}</option>
                     {/each}
@@ -379,13 +382,16 @@
   }
   .slots li {
     display: grid;
-    grid-template-columns: 8.5rem minmax(0, 1fr);
+    grid-template-columns: 9.5rem minmax(0, 1fr);
     gap: 0.5rem;
     align-items: baseline;
   }
   .slot {
     font-size: 0.72rem;
     color: rgba(24, 24, 27, 0.45);
+  }
+  .ico {
+    font-size: 0.9rem;
   }
   .slots li.sin-nada .slot {
     color: rgba(24, 24, 27, 0.28);

@@ -33,6 +33,24 @@ export const ETIQUETA_TIPO: Record<TipoPrenda, string> = {
 };
 
 /**
+ * Ícono de cada tipo. Son emoji y no SVG a propósito: el selector de tipo es un
+ * <select> nativo, y un <option> solo admite texto — ahí un SVG no se pinta.
+ * Usando emoji, el mismo ícono sirve en el selector, en el catálogo y en el
+ * panel del día, en vez de tener dos juegos distintos.
+ */
+export const ICONO_TIPO: Record<TipoPrenda, string> = {
+	interior_superior: '👙',
+	interior_inferior: '🩲',
+	vestido: '👗',
+	overol: '🦺',
+	top: '👕',
+	bottom: '👖',
+	calcetines: '🧦',
+	zapatos: '👟',
+	sombrero: '🎩'
+};
+
+/**
  * Prendas que con una sola pieza llenan más de un slot. Es propiedad del TIPO, no
  * de la prenda: todos los vestidos cubren top y bottom, así que vive aquí y no en
  * una columna de la base.

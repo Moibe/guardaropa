@@ -3,7 +3,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Textarea } from '$lib/components/ui/textarea';
-  import { ETIQUETA_TIPO, TIPOS_PRENDA } from '$lib/prendas';
+  import { ETIQUETA_TIPO, ICONO_TIPO, TIPOS_PRENDA } from '$lib/prendas';
   import type { ActionData, PageData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -41,7 +41,11 @@
       {@const lista = porTipo.get(tipo) ?? []}
       {#if lista.length}
         <div class="grupo">
-          <h2>{ETIQUETA_TIPO[tipo]} <span class="cuenta">{lista.length}</span></h2>
+          <h2>
+            <span class="ico" aria-hidden="true">{ICONO_TIPO[tipo]}</span>
+            {ETIQUETA_TIPO[tipo]}
+            <span class="cuenta">{lista.length}</span>
+          </h2>
           <ul>
             {#each lista as prenda (prenda.id)}
               {@const usos = data.usos[prenda.id] ?? 0}
@@ -88,7 +92,7 @@
         <span>Tipo</span>
         <select name="tipo" required>
           {#each TIPOS_PRENDA as tipo (tipo)}
-            <option value={tipo}>{ETIQUETA_TIPO[tipo]}</option>
+            <option value={tipo}>{ICONO_TIPO[tipo]} {ETIQUETA_TIPO[tipo]}</option>
           {/each}
         </select>
       </label>
@@ -157,6 +161,10 @@
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: rgba(24, 24, 27, 0.45);
+  }
+  .ico {
+    font-size: 0.95rem;
+    letter-spacing: 0;
   }
   .cuenta {
     display: inline-flex;
