@@ -1,16 +1,18 @@
-// Los slots que componen un vestuario. TODOS son opcionales: un vestuario puede
-// tener uno solo, todos, o varias prendas en el mismo slot (capas).
+// Las POSICIONES que componen un vestuario: dónde va puesta una prenda, no qué
+// prenda es. Un vestido y un overol NO son posiciones — son prendas que ocupan
+// una posición (y, si hiciera falta, más de una).
+//
+// Todas son opcionales: un vestuario puede llenar una sola, todas, o varias
+// prendas en la misma posición (capas).
 //
 // El orden del arreglo es el orden en que se pinta: de adentro hacia afuera y de
 // arriba hacia abajo, o sea el orden en que uno se viste.
 //
 // Este archivo NO es server-only a propósito: el schema de drizzle lo importa por
-// ruta relativa y la UI por $lib, así que la lista de tipos vive en un solo lugar.
-export const TIPOS_PRENDA = [
+// ruta relativa y la UI por $lib, así que la lista vive en un solo lugar.
+export const POSICIONES = [
 	'interior_superior',
 	'interior_inferior',
-	'vestido',
-	'overol',
 	'top',
 	'bottom',
 	'calcetines',
@@ -18,13 +20,11 @@ export const TIPOS_PRENDA = [
 	'sombrero'
 ] as const;
 
-export type TipoPrenda = (typeof TIPOS_PRENDA)[number];
+export type Posicion = (typeof POSICIONES)[number];
 
-export const ETIQUETA_TIPO: Record<TipoPrenda, string> = {
+export const ETIQUETA_POSICION: Record<Posicion, string> = {
 	interior_superior: 'Interior superior',
 	interior_inferior: 'Interior inferior',
-	vestido: 'Vestido',
-	overol: 'Overol',
 	top: 'Top',
 	bottom: 'Bottom',
 	calcetines: 'Calcetines',
@@ -33,47 +33,19 @@ export const ETIQUETA_TIPO: Record<TipoPrenda, string> = {
 };
 
 /**
- * Ícono de cada tipo. Son emoji y no SVG a propósito: el selector de tipo es un
- * <select> nativo, y un <option> solo admite texto — ahí un SVG no se pinta.
- * Usando emoji, el mismo ícono sirve en el selector, en el catálogo y en el
- * panel del día, en vez de tener dos juegos distintos.
+ * Ícono de cada posición. Son emoji y no SVG a propósito: el selector es un
+ * <select> nativo, y un <option> solo admite texto — ahí un SVG no se pinta. Con
+ * emoji el mismo ícono sirve en el selector, en el catálogo y en el panel del día.
  */
-export const ICONO_TIPO: Record<TipoPrenda, string> = {
+export const ICONO_POSICION: Record<Posicion, string> = {
 	interior_superior: '👙',
 	interior_inferior: '🩲',
-	vestido: '👗',
-	overol: '🦺',
 	top: '👕',
 	bottom: '👖',
 	calcetines: '🧦',
 	zapatos: '👟',
 	sombrero: '🎩'
 };
-
-/**
- * Prendas que con una sola pieza llenan más de un slot. Es propiedad del TIPO, no
- * de la prenda: todos los vestidos cubren top y bottom, así que vive aquí y no en
- * una columna de la base.
- *
- * Lo que no está en este mapa se cubre a sí mismo.
- *
- * Esto INFORMA, no restringe: vestido con leggings debajo es un outfit real, así
- * que nada impide llenar además el slot cubierto.
- */
-export const CUBRE: Partial<Record<TipoPrenda, readonly TipoPrenda[]>> = {
-	vestido: ['top', 'bottom'],
-	overol: ['top', 'bottom']
-};
-
-/** ¿Este tipo existe para cubrir otros slots? */
-export function esCobertor(tipo: TipoPrenda): boolean {
-	return tipo in CUBRE;
-}
-
-/** Qué slots llena una prenda de este tipo (él mismo, si no cubre otros). */
-export function slotsCubiertos(tipo: TipoPrenda): readonly TipoPrenda[] {
-	return CUBRE[tipo] ?? [tipo];
-}
 
 /**
  * Para comparar y buscar nombres de prendas: sin acentos, sin mayúsculas, sin
@@ -90,6 +62,6 @@ export function normaliza(texto: string): string {
 		.toLowerCase();
 }
 
-export function esTipoPrenda(valor: string): valor is TipoPrenda {
-	return (TIPOS_PRENDA as readonly string[]).includes(valor);
+export function esPosicion(valor: string): valor is Posicion {
+	return (POSICIONES as readonly string[]).includes(valor);
 }

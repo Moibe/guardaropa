@@ -2,14 +2,14 @@ import { fail } from '@sveltejs/kit';
 import { asc, eq, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { prendas, vestuarioPrendas } from '$lib/server/db/schema';
-import { esTipoPrenda } from '$lib/prendas';
+import { esPosicion } from '$lib/prendas';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = () => {
 	const catalogo = db
 		.select()
 		.from(prendas)
-		.orderBy(asc(prendas.tipo), asc(prendas.nombre))
+		.orderBy(asc(prendas.posicion), asc(prendas.nombre))
 		.all();
 
 	// Cuántas veces se ha usado cada prenda: decide si se puede borrar de verdad
@@ -39,16 +39,16 @@ function vecesUsada(prendaId: number): number {
 export const actions: Actions = {
 	agregar: async ({ request }) => {
 		const datos = await request.formData();
-		const tipo = String(datos.get('tipo') ?? '');
+		const posicion = String(datos.get('posicion') ?? '');
 		const nombre = String(datos.get('nombre') ?? '').trim();
 		const color = String(datos.get('color') ?? '').trim();
 		const notas = String(datos.get('notas') ?? '').trim();
 
-		if (!esTipoPrenda(tipo)) return fail(400, { error: 'Elige de qué tipo es la prenda.' });
+		if (!esPosicion(posicion)) return fail(400, { error: 'Elige en qué posición va la prenda.' });
 		if (!nombre) return fail(400, { error: 'Ponle nombre a la prenda.' });
 
 		db.insert(prendas)
-			.values({ tipo, nombre, color: color || null, notas: notas || null })
+			.values({ posicion, nombre, color: color || null, notas: notas || null })
 			.run();
 		return { ok: true };
 	},

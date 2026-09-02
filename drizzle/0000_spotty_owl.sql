@@ -1,6 +1,6 @@
 CREATE TABLE `prendas` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
-	`tipo` text NOT NULL,
+	`posicion` text NOT NULL,
 	`nombre` text NOT NULL,
 	`color` text,
 	`notas` text,
@@ -8,7 +8,7 @@ CREATE TABLE `prendas` (
 	`creado` integer NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `prendas_tipo_idx` ON `prendas` (`tipo`);--> statement-breakpoint
+CREATE INDEX `prendas_posicion_idx` ON `prendas` (`posicion`);--> statement-breakpoint
 CREATE TABLE `vestuario_prendas` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`vestuario_id` integer NOT NULL,

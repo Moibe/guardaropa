@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Buscador de un renglón del vestuario: escribes, filtra abajo, y si lo que
+  // Buscador de una posición del vestuario: escribes, filtra abajo, y si lo que
   // escribiste no existe, Enter la da de alta y te la pone.
   //
   // Vive en su propio componente a propósito: el renglón abierto se monta y se
@@ -12,18 +12,18 @@
 
   let {
     vestuarioId,
-    tipo,
+    posicion,
     etiqueta,
     opciones,
-    hayDelTipo,
+    hayEnPosicion,
     accionPoner,
     accionAgregar
   }: {
     vestuarioId: number;
-    tipo: string;
+    posicion: string;
     etiqueta: string;
     opciones: Opcion[];
-    hayDelTipo: boolean;
+    hayEnPosicion: boolean;
     accionPoner: string;
     accionAgregar: string;
   } = $props();
@@ -43,7 +43,7 @@
 
 <form method="POST" action={accionPoner} use:enhance>
   <input type="hidden" name="vestuarioId" value={vestuarioId} />
-  <input type="hidden" name="tipo" value={tipo} />
+  <input type="hidden" name="posicion" value={posicion} />
   <input
     class="buscar"
     name="nombre"
@@ -73,9 +73,9 @@
   </p>
 {:else if !termino && !opciones.length}
   <p class="pista">
-    {hayDelTipo
-      ? 'Ya traes puesto todo lo que tienes de este tipo. Escribe para dar de alta otra.'
-      : 'No tienes prendas de este tipo. Escribe el nombre para darla de alta.'}
+    {hayEnPosicion
+      ? 'Ya traes puesto todo lo que tienes para esta posición. Escribe para dar de alta otra.'
+      : 'No tienes prendas para esta posición. Escribe el nombre para darla de alta.'}
   </p>
 {/if}
 

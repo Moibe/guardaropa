@@ -3,17 +3,17 @@
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Textarea } from '$lib/components/ui/textarea';
-  import { ETIQUETA_TIPO, ICONO_TIPO, TIPOS_PRENDA } from '$lib/prendas';
+  import { ETIQUETA_POSICION, ICONO_POSICION, POSICIONES } from '$lib/prendas';
   import type { ActionData, PageData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
 
-  const porTipo = $derived.by(() => {
+  const porPosicion = $derived.by(() => {
     const mapa = new Map<string, PageData['catalogo']>();
     for (const prenda of data.catalogo) {
-      const lista = mapa.get(prenda.tipo);
+      const lista = mapa.get(prenda.posicion);
       if (lista) lista.push(prenda);
-      else mapa.set(prenda.tipo, [prenda]);
+      else mapa.set(prenda.posicion, [prenda]);
     }
     return mapa;
   });
@@ -37,13 +37,13 @@
       </p>
     {/if}
 
-    {#each TIPOS_PRENDA as tipo (tipo)}
-      {@const lista = porTipo.get(tipo) ?? []}
+    {#each POSICIONES as posicion (posicion)}
+      {@const lista = porPosicion.get(posicion) ?? []}
       {#if lista.length}
         <div class="grupo">
           <h2>
-            <span class="ico" aria-hidden="true">{ICONO_TIPO[tipo]}</span>
-            {ETIQUETA_TIPO[tipo]}
+            <span class="ico" aria-hidden="true">{ICONO_POSICION[posicion]}</span>
+            {ETIQUETA_POSICION[posicion]}
             <span class="cuenta">{lista.length}</span>
           </h2>
           <ul>
@@ -89,10 +89,10 @@
     <h2>Nueva prenda</h2>
     <form method="POST" action="?/agregar" use:enhance>
       <label>
-        <span>Tipo</span>
-        <select name="tipo" required>
-          {#each TIPOS_PRENDA as tipo (tipo)}
-            <option value={tipo}>{ICONO_TIPO[tipo]} {ETIQUETA_TIPO[tipo]}</option>
+        <span>Posición</span>
+        <select name="posicion" required>
+          {#each POSICIONES as posicion (posicion)}
+            <option value={posicion}>{ICONO_POSICION[posicion]} {ETIQUETA_POSICION[posicion]}</option>
           {/each}
         </select>
       </label>

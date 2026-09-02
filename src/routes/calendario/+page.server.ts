@@ -3,7 +3,7 @@ import { and, asc, between, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { prendas, vestuarioPrendas, vestuarios, type Prenda } from '$lib/server/db/schema';
 import { aIsoDia, aIsoMes, esIsoDia, esIsoMes, mesDelDia } from '$lib/fechas';
-import { esTipoPrenda, normaliza } from '$lib/prendas';
+import { esPosicion, normaliza } from '$lib/prendas';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ url }) => {
@@ -37,7 +37,7 @@ export const load: PageServerLoad = ({ url }) => {
 					capa: vestuarioPrendas.capa,
 					prendaId: prendas.id,
 					nombre: prendas.nombre,
-					tipo: prendas.tipo,
+					posicion: prendas.posicion,
 					color: prendas.color
 				})
 				.from(vestuarioPrendas)
@@ -50,22 +50,22 @@ export const load: PageServerLoad = ({ url }) => {
 	// Solo las prendas activas se ofrecen en el selector; las archivadas siguen
 	// apareciendo en los vestuarios donde ya estaban.
 	const catalogo = db
-		.select({ id: prendas.id, nombre: prendas.nombre, tipo: prendas.tipo })
+		.select({ id: prendas.id, nombre: prendas.nombre, posicion: prendas.posicion })
 		.from(prendas)
 		.where(eq(prendas.activa, true))
-		.orderBy(asc(prendas.tipo), asc(prendas.nombre))
+		.orderBy(asc(prendas.posicion), asc(prendas.nombre))
 		.all();
 
 	// Qué renglón de qué vestuario está abierto para elegir prenda, como
-	// '<vestuarioId>:<tipo>'. Vive en la URL igual que mes y día: sin estado de
+	// '<vestuarioId>:<posicion>'. Vive en la URL igual que mes y día: sin estado de
 	// cliente, con back button, y funciona sin JS.
 	const ponerParam = url.searchParams.get('poner');
 	let poner: string | null = null;
 	if (ponerParam) {
-		const [idTexto, tipo] = ponerParam.split(':');
+		const [idTexto, pos] = ponerParam.split(':');
 		const id = Number(idTexto);
 		const abrible = delMes.some((v) => v.id === id && v.fecha === dia);
-		if (Number.isInteger(id) && tipo && esTipoPrenda(tipo) && abrible) poner = ponerParam;
+		if (Number.isInteger(id) && pos && esPosicion(pos) && abrible) poner = ponerParam;
 	}
 
 	return { mes, dia, hoy: isoHoy, poner, vestuarios: delMes, piezas, catalogo };
@@ -86,13 +86,13 @@ function ponerEnVestuario(vestuarioId: number, prenda: Prenda): boolean {
 		.get();
 	if (yaPuesta) return false;
 
-	// La capa nueva va encima de lo que ya haya en ese mismo slot: el slot es el
-	// tipo de la prenda, así que se cuenta cuántas del mismo tipo trae el vestuario.
+	// La capa nueva va encima de lo que ya haya en esa misma posición: la posición es la
+	// posición de la prenda, así que se cuenta cuántas de la misma trae el vestuario.
 	const fila = db
 		.select({ cuantas: sql<number>`count(*)` })
 		.from(vestuarioPrendas)
 		.innerJoin(prendas, eq(vestuarioPrendas.prendaId, prendas.id))
-		.where(and(eq(vestuarioPrendas.vestuarioId, vestuarioId), eq(prendas.tipo, prenda.tipo)))
+		.where(and(eq(vestuarioPrendas.vestuarioId, vestuarioId), eq(prendas.posicion, prenda.posicion)))
 		.get();
 
 	db.insert(vestuarioPrendas)
@@ -146,28 +146,28 @@ export const actions: Actions = {
 	},
 
 	/**
-	 * Escribir el nombre en el renglón. Si ya existe una prenda de ese tipo con ese
+	 * Escribir el nombre en el renglón. Si ya existe una prenda en esa posición con ese
 	 * nombre se usa esa (comparando normalizado, así "Polo roja" y "polo  ROJA" son
 	 * la misma); si no existe, se da de alta y se pone, en un solo paso.
 	 */
 	ponerPorNombre: async ({ request }) => {
 		const datos = await request.formData();
 		const vestuarioId = Number(datos.get('vestuarioId'));
-		const tipo = String(datos.get('tipo') ?? '');
+		const posicion = String(datos.get('posicion') ?? '');
 		const nombre = String(datos.get('nombre') ?? '').trim();
 
 		if (!Number.isInteger(vestuarioId)) return fail(400, { error: 'Ese vestuario no existe.' });
-		if (!esTipoPrenda(tipo)) return fail(400, { error: 'Ese tipo de prenda no existe.' });
+		if (!esPosicion(posicion)) return fail(400, { error: 'Esa posición no existe.' });
 		if (!nombre) return fail(400, { error: 'Escribe el nombre de la prenda.' });
 
 		const vestuario = db.select().from(vestuarios).where(eq(vestuarios.id, vestuarioId)).get();
 		if (!vestuario) return fail(404, { error: 'Ese vestuario no existe.' });
 
-		const delTipo = db.select().from(prendas).where(eq(prendas.tipo, tipo)).all();
-		let prenda = delTipo.find((p) => normaliza(p.nombre) === normaliza(nombre));
+		const enPosicion = db.select().from(prendas).where(eq(prendas.posicion, posicion)).all();
+		let prenda = enPosicion.find((p) => normaliza(p.nombre) === normaliza(nombre));
 
 		if (!prenda) {
-			prenda = db.insert(prendas).values({ tipo, nombre }).returning().get();
+			prenda = db.insert(prendas).values({ posicion, nombre }).returning().get();
 		} else if (!prenda.activa) {
 			// Estaba archivada: volver a usarla la revive, en vez de crear una duplicada.
 			db.update(prendas).set({ activa: true }).where(eq(prendas.id, prenda.id)).run();

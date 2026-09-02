@@ -11,8 +11,7 @@
     nombreMes
   } from '$lib/fechas';
   import SlotPicker from '$lib/SlotPicker.svelte';
-  import { ETIQUETA_TIPO, ICONO_TIPO, TIPOS_PRENDA, esCobertor, slotsCubiertos } from '$lib/prendas';
-  import type { TipoPrenda } from '$lib/prendas';
+  import { ETIQUETA_POSICION, ICONO_POSICION, POSICIONES } from '$lib/prendas';
   import type { ActionData, PageData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -42,24 +41,6 @@
   });
 
   const delDia = $derived(porFecha.get(data.dia) ?? []);
-
-  /**
-   * Qué slots quedan cubiertos por un cobertor (vestido, overol) y por cuál. Solo
-   * se usa para explicar los slots que quedaron vacíos: si además pusiste algo en
-   * ese slot, manda la prenda.
-   */
-  function cobertura(piezas: PageData['piezas']) {
-    const mapa = new Map<TipoPrenda, string[]>();
-    for (const pieza of piezas) {
-      if (!esCobertor(pieza.tipo)) continue;
-      for (const slot of slotsCubiertos(pieza.tipo)) {
-        const lista = mapa.get(slot);
-        if (lista) lista.push(pieza.nombre);
-        else mapa.set(slot, [pieza.nombre]);
-      }
-    }
-    return mapa;
-  }
 
   const qs = $derived(`mes=${data.mes}&dia=${data.dia}`);
 
@@ -138,7 +119,6 @@
 
     {#each delDia as vestuario (vestuario.id)}
       {@const piezas = piezasPorVestuario.get(vestuario.id) ?? []}
-      {@const cubiertos = cobertura(piezas)}
       <article class="vestuario">
         <header>
           <h3>{vestuario.etiqueta ?? 'Vestuario'}</h3>
@@ -151,23 +131,23 @@
         </header>
 
         <ul class="slots">
-          {#each TIPOS_PRENDA as tipo (tipo)}
-            {@const delSlot = piezas.filter((p) => p.tipo === tipo)}
-            {@const clave = `${vestuario.id}:${tipo}`}
+          {#each POSICIONES as posicion (posicion)}
+            {@const puestas = piezas.filter((p) => p.posicion === posicion)}
+            {@const clave = `${vestuario.id}:${posicion}`}
             {@const abierto = data.poner === clave}
             <!-- Lo que ya trae puesto no se vuelve a ofrecer: la misma prenda
                  física no se puede llevar dos veces en el mismo vestuario. -->
             {@const opciones = data.catalogo.filter(
-              (p) => p.tipo === tipo && !piezas.some((x) => x.prendaId === p.id)
+              (p) => p.posicion === posicion && !piezas.some((x) => x.prendaId === p.id)
             )}
-            <li class:sin-nada={delSlot.length === 0} class:abierto>
+            <li class:sin-nada={puestas.length === 0} class:abierto>
               <a class="slot" href={abierto ? urlCerrar() : urlPoner(clave)}>
-                <span class="ico" aria-hidden="true">{ICONO_TIPO[tipo]}</span>
-                {ETIQUETA_TIPO[tipo]}
+                <span class="ico" aria-hidden="true">{ICONO_POSICION[posicion]}</span>
+                {ETIQUETA_POSICION[posicion]}
               </a>
-              {#if delSlot.length}
+              {#if puestas.length}
                 <span class="puestas">
-                  {#each delSlot as pieza (pieza.id)}
+                  {#each puestas as pieza (pieza.id)}
                     <span class="chip">
                       {pieza.nombre}
                       <form method="POST" action={accion('quitarPrenda')} use:enhance>
@@ -181,11 +161,7 @@
                 <!-- El hueco también es link, para que en un renglón vacío se pueda
                      hacer clic en cualquier parte, no solo en la etiqueta. -->
                 <a class="relleno" href={abierto ? urlCerrar() : urlPoner(clave)}>
-                  {#if cubiertos.has(tipo)}
-                    <span class="cubierto">cubierto por {cubiertos.get(tipo)?.join(', ')}</span>
-                  {:else}
-                    <span class="nada">—</span>
-                  {/if}
+                  <span class="nada">—</span>
                 </a>
               {/if}
             </li>
@@ -193,10 +169,10 @@
               <li class="picker">
                 <SlotPicker
                   vestuarioId={vestuario.id}
-                  {tipo}
-                  etiqueta={ETIQUETA_TIPO[tipo]}
+                  {posicion}
+                  etiqueta={ETIQUETA_POSICION[posicion]}
                   opciones={opciones}
-                  hayDelTipo={data.catalogo.some((p) => p.tipo === tipo)}
+                  hayEnPosicion={data.catalogo.some((p) => p.posicion === posicion)}
                   accionPoner={accion('ponerPorNombre', `&poner=${clave}`)}
                   accionAgregar={accion('agregarPrenda', `&poner=${clave}`)}
                 />
@@ -442,12 +418,6 @@
   .nada {
     font-size: 0.8rem;
     color: rgba(24, 24, 27, 0.25);
-  }
-  .cubierto {
-    font-size: 0.72rem;
-    font-style: italic;
-    color: rgba(24, 24, 27, 0.38);
-    overflow-wrap: anywhere;
   }
 
   .puestas {

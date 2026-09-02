@@ -1,5 +1,5 @@
 import { sqliteTable, integer, text, index } from 'drizzle-orm/sqlite-core';
-import { TIPOS_PRENDA } from '../../prendas';
+import { POSICIONES } from '../../prendas';
 
 // Ruta relativa a propósito en el import de arriba: drizzle-kit compila este archivo
 // fuera de Vite, así que el alias $lib no le resuelve.
@@ -13,7 +13,7 @@ export const prendas = sqliteTable(
 	'prendas',
 	{
 		id: integer('id').primaryKey({ autoIncrement: true }),
-		tipo: text('tipo', { enum: TIPOS_PRENDA }).notNull(),
+		posicion: text('posicion', { enum: POSICIONES }).notNull(),
 		nombre: text('nombre').notNull(),
 		color: text('color'),
 		notas: text('notas'),
@@ -22,7 +22,7 @@ export const prendas = sqliteTable(
 			.notNull()
 			.$defaultFn(() => new Date())
 	},
-	(t) => [index('prendas_tipo_idx').on(t.tipo)]
+	(t) => [index('prendas_posicion_idx').on(t.posicion)]
 );
 
 /**
@@ -45,9 +45,9 @@ export const vestuarios = sqliteTable(
 );
 
 /**
- * Qué prendas lleva un vestuario. El slot NO se guarda aquí: es el `tipo` de la
- * prenda, así no hay forma de que los dos se contradigan. `capa` ordena dentro
- * de un mismo slot (playera capa 0, saco capa 1).
+ * Qué prendas lleva un vestuario. La posición NO se guarda aquí: es la `posicion`
+ * de la prenda, así no hay forma de que las dos se contradigan. `capa` ordena
+ * dentro de una misma posición (playera capa 0, saco capa 1).
  */
 export const vestuarioPrendas = sqliteTable(
 	'vestuario_prendas',

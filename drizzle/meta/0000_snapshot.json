@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ffd33493-55e0-4371-8105-76ccc53b5df7",
+  "id": "f72ca33b-3075-481a-8b54-f6738b4ab0d0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "prendas": {
@@ -14,8 +14,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "tipo": {
-          "name": "tipo",
+        "posicion": {
+          "name": "posicion",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -59,10 +59,10 @@
         }
       },
       "indexes": {
-        "prendas_tipo_idx": {
-          "name": "prendas_tipo_idx",
+        "prendas_posicion_idx": {
+          "name": "prendas_posicion_idx",
           "columns": [
-            "tipo"
+            "posicion"
           ],
           "isUnique": false
         }
