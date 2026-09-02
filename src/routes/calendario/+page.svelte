@@ -10,7 +10,8 @@
     mesVecino,
     nombreMes
   } from '$lib/fechas';
-  import { ETIQUETA_TIPO, TIPOS_PRENDA } from '$lib/prendas';
+  import { ETIQUETA_TIPO, TIPOS_PRENDA, esCobertor, slotsCubiertos } from '$lib/prendas';
+  import type { TipoPrenda } from '$lib/prendas';
   import type { ActionData, PageData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -40,6 +41,24 @@
   });
 
   const delDia = $derived(porFecha.get(data.dia) ?? []);
+
+  /**
+   * Qué slots quedan cubiertos por un cobertor (vestido, overol) y por cuál. Solo
+   * se usa para explicar los slots que quedaron vacíos: si además pusiste algo en
+   * ese slot, manda la prenda.
+   */
+  function cobertura(piezas: PageData['piezas']) {
+    const mapa = new Map<TipoPrenda, string[]>();
+    for (const pieza of piezas) {
+      if (!esCobertor(pieza.tipo)) continue;
+      for (const slot of slotsCubiertos(pieza.tipo)) {
+        const lista = mapa.get(slot);
+        if (lista) lista.push(pieza.nombre);
+        else mapa.set(slot, [pieza.nombre]);
+      }
+    }
+    return mapa;
+  }
 
   function urlDia(iso: string) {
     return `?mes=${mesDelDia(iso)}&dia=${iso}`;
@@ -104,6 +123,7 @@
 
     {#each delDia as vestuario (vestuario.id)}
       {@const piezas = piezasPorVestuario.get(vestuario.id) ?? []}
+      {@const cubiertos = cobertura(piezas)}
       <article class="vestuario">
         <header>
           <h3>{vestuario.etiqueta ?? 'Vestuario'}</h3>
@@ -118,24 +138,30 @@
         <ul class="slots">
           {#each TIPOS_PRENDA as tipo (tipo)}
             {@const delSlot = piezas.filter((p) => p.tipo === tipo)}
-            <li class:sin-nada={delSlot.length === 0}>
-              <span class="slot">{ETIQUETA_TIPO[tipo]}</span>
-              {#if delSlot.length}
-                <span class="puestas">
-                  {#each delSlot as pieza (pieza.id)}
-                    <span class="chip">
-                      {pieza.nombre}
-                      <form method="POST" action="?/quitarPrenda" use:enhance>
-                        <input type="hidden" name="id" value={pieza.id} />
-                        <button type="submit" aria-label="Quitar {pieza.nombre}">×</button>
-                      </form>
-                    </span>
-                  {/each}
-                </span>
-              {:else}
-                <span class="nada">—</span>
-              {/if}
-            </li>
+            <!-- Vestido y overol solo aparecen si traen algo: si no, serían dos
+                 renglones en "—" casi todos los días. -->
+            {#if delSlot.length || !esCobertor(tipo)}
+              <li class:sin-nada={delSlot.length === 0}>
+                <span class="slot">{ETIQUETA_TIPO[tipo]}</span>
+                {#if delSlot.length}
+                  <span class="puestas">
+                    {#each delSlot as pieza (pieza.id)}
+                      <span class="chip">
+                        {pieza.nombre}
+                        <form method="POST" action="?/quitarPrenda" use:enhance>
+                          <input type="hidden" name="id" value={pieza.id} />
+                          <button type="submit" aria-label="Quitar {pieza.nombre}">×</button>
+                        </form>
+                      </span>
+                    {/each}
+                  </span>
+                {:else if cubiertos.has(tipo)}
+                  <span class="cubierto">cubierto por {cubiertos.get(tipo)?.join(', ')}</span>
+                {:else}
+                  <span class="nada">—</span>
+                {/if}
+              </li>
+            {/if}
           {/each}
         </ul>
 
@@ -367,6 +393,12 @@
   .nada {
     font-size: 0.8rem;
     color: rgba(24, 24, 27, 0.25);
+  }
+  .cubierto {
+    font-size: 0.72rem;
+    font-style: italic;
+    color: rgba(24, 24, 27, 0.38);
+    overflow-wrap: anywhere;
   }
 
   .puestas {
