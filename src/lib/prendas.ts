@@ -7,7 +7,12 @@
 //
 // El orden del arreglo es el orden en que se pinta, y NO es el orden en que uno se
 // viste: arriba lo que se decide a diario (top, bottom, zapatos), luego interiores
-// y calcetines, y hasta el final el sombrero.
+// y calcetines, y al final sombrero y accesorios.
+//
+// `accesorios` es la posición de varios por definición (aretes, reloj, cinturón),
+// pero no necesita nada especial: cualquier posición admite varias prendas — es el
+// mismo mecanismo que las capas, solo que aquí `capa` es orden de captura y no
+// una prenda encima de otra.
 //
 // Este archivo NO es server-only a propósito: el schema de drizzle lo importa por
 // ruta relativa y la UI por $lib, así que la lista vive en un solo lugar.
@@ -18,7 +23,8 @@ export const POSICIONES = [
 	'interior_superior',
 	'interior_inferior',
 	'calcetines',
-	'sombrero'
+	'sombrero',
+	'accesorios'
 ] as const;
 
 export type Posicion = (typeof POSICIONES)[number];
@@ -30,7 +36,8 @@ export const ETIQUETA_POSICION: Record<Posicion, string> = {
 	bottom: 'Bottom',
 	calcetines: 'Calcetines',
 	zapatos: 'Zapatos',
-	sombrero: 'Sombrero'
+	sombrero: 'Sombrero',
+	accesorios: 'Accesorios'
 };
 
 /**
@@ -45,7 +52,8 @@ export const ICONO_POSICION: Record<Posicion, string> = {
 	bottom: '👖',
 	calcetines: '🧦',
 	zapatos: '👟',
-	sombrero: '🎩'
+	sombrero: '🎩',
+	accesorios: '💍'
 };
 
 /**
