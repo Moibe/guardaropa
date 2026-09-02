@@ -5,18 +5,19 @@
 // Todas son opcionales: un vestuario puede llenar una sola, todas, o varias
 // prendas en la misma posición (capas).
 //
-// El orden del arreglo es el orden en que se pinta: de adentro hacia afuera y de
-// arriba hacia abajo, o sea el orden en que uno se viste.
+// El orden del arreglo es el orden en que se pinta, y NO es el orden en que uno se
+// viste: arriba lo que se decide a diario (top, bottom, zapatos), luego interiores
+// y calcetines, y hasta el final el sombrero.
 //
 // Este archivo NO es server-only a propósito: el schema de drizzle lo importa por
 // ruta relativa y la UI por $lib, así que la lista vive en un solo lugar.
 export const POSICIONES = [
-	'interior_superior',
-	'interior_inferior',
 	'top',
 	'bottom',
-	'calcetines',
 	'zapatos',
+	'interior_superior',
+	'interior_inferior',
+	'calcetines',
 	'sombrero'
 ] as const;
 
